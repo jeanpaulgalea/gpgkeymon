@@ -1,0 +1,433 @@
+#!/bin/sh
+
+# Copyright (c) 2016, Yubico AB
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+set -e
+set -u
+
+PATH="/usr/local/bin:/usr/bin:/bin"
+
+GPG=gpg2
+KEYSERVER=keys.gnupg.net
+
+BASEDIR="$( cd "$(dirname "$0")" && pwd )"
+CONFDIR="${BASEDIR}/config"
+FPS="$CONFDIR/fingerprints"
+PUBKEYS="$CONFDIR/pubkeys"
+
+if [ ! -d "$CONFDIR" ];
+then
+	echo "directory not found: $CONFDIR" 1>&2
+	exit 2
+fi
+
+
+is_integer() {
+	local val="$1"
+
+	if [ "$(echo "$val" | tr -cd '0-9')" = "$val" -a -n "$val" ];
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+import_by_pubkeys() {
+	if [ ! -d "$PUBKEYS" ];
+	then
+		return
+	fi
+
+	find "$PUBKEYS" -type f -exec sh -c \
+		"$GPG --import {} 1>/dev/null 2>/dev/null || echo 'failed to import: {}' 1>&2" \;
+}
+
+import_by_fingerprints() {
+	if [ ! -r "$FPS" -o ! -s "$FPS" ];
+	then
+		return
+	fi
+
+	# drop comments, trailing whitespace and simple fingerprint validation
+	sed -n 's/#.*$//; s/\s\s*$//; /^[a-fA-F0-9]\{40\}$/!d; p' "$FPS" | \
+		tr 'a-f' 'A-F' | \
+			while IFS= read -r fp;
+	do
+		if ! $GPG --keyserver $KEYSERVER --recv-keys "$fp" 1>/dev/null 2>/dev/null ;
+		then
+			echo "failed to import: $fp" 1>&2
+		fi
+	done
+}
+
+# did we manage to import any keys or not
+any_imported_keys() {
+	$GPG -k --fingerprint --with-colon | grep -q ^fpr:
+}
+
+# print fingerprint for each imported key
+get_keys_by_fingerprint() {
+	$GPG -k --fingerprint --with-colon | awk -F: '/^fpr:/{ print $10 }'
+}
+
+# for a given fingerprint, print;
+#	uid (name <email>) -- @yubico.com email prioritised
+#	expires at (unix timestamp)
+#	revoked (bool 1/0)
+get_key_details() {
+	local fp="$1"
+	$GPG -k --with-colon "$fp" | awk '
+BEGIN {
+	FS=":"
+	OFS="\t"
+
+	revoked=0
+}
+
+/^pub:/ {
+	if ($2 == "r") revoked=1
+	expires=$7
+}
+
+/^uid:/ {
+	if (yuid != "") next;
+	if ($10 ~ /@yubico\.com/) yuid=$10
+
+	if (uid != "") next;
+	uid=$10
+}
+
+END {
+	if (yuid != "") uid=yuid
+	print uid, expires, revoked
+}'
+}
+
+get_key_status() {
+	local ts_expiry="$1"
+	local revoked="$2"
+
+	if [ "$revoked" -gt 0 ];
+	then
+		return 5 #6
+	fi
+
+	# doesn't expire
+	if [ -z "$ts_expiry" ];
+	then
+		return 4 #5
+	fi
+
+	TS_NOW="$(date +%s)"
+	TS_WARN="$(date -d "$OPT_WARN day" +%s)"
+
+	# unknown; can't figure out timestamps
+	if [ -z "$TS_NOW" -o -z "$TS_WARN" ];
+	then
+		return 3 #4
+	fi
+
+	# expired already
+	if [ "$TS_NOW" -gt "$ts_expiry" ];
+	then
+		return 2 #3
+	fi
+
+	if [ "$TS_WARN" -gt "$ts_expiry" ];
+	then
+		return 1
+	fi
+
+	return 0
+}
+
+format_expiry_date() {
+	local ts_expiry="$1"
+
+	if [ -z "$ts_expiry" ];
+	then
+		return
+	fi
+
+	date -d "@${ts_expiry}" "+%Y-%m-%d" 2>/dev/null
+}
+
+# print one line for each key;
+#	ORDER BY status DESC, expire ASC
+get_generic_report() {
+	get_keys_by_fingerprint | while IFS= read -r fp;
+	do
+		key_details="$(get_key_details "$fp")"
+
+		uid="$(echo "$key_details" | cut -f1)"
+		expiry="$(echo "$key_details" | cut -f2)"
+		revoked="$(echo "$key_details" | cut -f3)"
+		unset key_details
+
+		set +e
+		get_key_status "$expiry" "$revoked"
+		status=$?
+		set -e
+
+		if [ "$status" -eq 3 ];
+		then
+			echo "error: can't calculate dates for $fp" 1>&2
+			continue
+		fi
+
+		expiry="$(format_expiry_date "$expiry")"
+
+		echo "$expiry:$status:$fp:$uid"
+	done | \
+		sort -t: -k 2,2nr -k1,1
+}
+
+dump_scriptable_report() {
+	get_generic_report | \
+		awk -F: \
+			-v OPT_REVOKED="$OPT_REVOKED" \
+			-v OPT_EXPIRED="$OPT_EXPIRED" \
+			-v OPT_EXPIRES="$OPT_EXPIRES" \
+			-v OPT_OK="$OPT_OK" \
+			-v OPT_NOEXPIRY="$OPT_NOEXPIRY" '
+{
+	status=$2
+
+	if (status == 5 && OPT_REVOKED  != -1 && a[status]++ >= OPT_REVOKED) next;
+	if (status == 4 && OPT_NOEXPIRY != -1 && a[status]++ >= OPT_NOEXPIRY) next;
+	if (status == 2 && OPT_EXPIRED  != -1 && a[status]++ >= OPT_EXPIRED) next;
+	if (status == 1 && OPT_EXPIRES  != -1 && a[status]++ >= OPT_EXPIRES) next;
+	if (status == 0 && OPT_OK       != -1 && a[status]++ >= OPT_OK) next;
+
+	print $0
+}
+'
+}
+
+dump_readable_report() {
+	# doing `awk '' TMPFILE TMPFILE` to use FNR==NR hack
+	get_generic_report >"$TMPFILE"
+
+	awk -F: \
+		-v OPT_REVOKED="$OPT_REVOKED" \
+		-v OPT_EXPIRED="$OPT_EXPIRED" \
+		-v OPT_EXPIRES="$OPT_EXPIRES" \
+		-v OPT_OK="$OPT_OK" \
+		-v OPT_NOEXPIRY="$OPT_NOEXPIRY" \
+		-v OPT_WARN="$OPT_WARN" '
+BEGIN {
+	limit[5] = OPT_REVOKED
+	limit[4] = OPT_NOEXPIRY
+	limit[2] = OPT_EXPIRED
+	limit[1] = OPT_EXPIRES
+	limit[0] = OPT_OK
+}
+
+FNR == NR {
+	found[$2]++; next
+}
+
+{
+	expiry=$1
+	status=$2
+	fp=$3
+	uid=$4
+
+	row[status]++
+
+	# explicitly requested not to display this status
+	if (limit[status] == 0) next;
+
+	if (row[status] == 1) {
+		if (status == 5) {
+			if (limit[status] == -1) {
+				printf "Revoked\n"
+				printf "-------\n\n"
+			} else {
+				printf "Revoked (top %s) (total: %s)\n", limit[status], found[status]
+				printf "----------------------------\n\n"
+			}
+		}
+		else if (status == 4) {
+			if (limit[status] == -1) {
+				printf "Do not expire\n"
+				printf "---------------\n\n"
+			} else {
+				printf "Do not expire (top %s) (total: %s)\n", limit[status], found[status]
+				printf "------------------------------------\n\n"
+			}
+		}
+		else if (status == 2) {
+			if (limit[status] == -1) {
+				printf "Has already expired\n"
+				printf "---------------\n\n"
+			} else {
+				printf "Has already expired (top %s) (total: %s)\n", limit[status], found[status]
+				printf "------------------------------------\n\n"
+			}
+		}
+		else if (status == 1) {
+			if (limit[status] == -1) {
+				printf "Expires in %s days\n", OPT_WARN
+				printf "------------------\n\n"
+			} else {
+				printf "Expires in %s days (top %s) (total: %s)\n", OPT_WARN, limit[status], found[status]
+				printf "---------------------------------------\n\n"
+			}
+		}
+		else if (status == 0) {
+			if (limit[status] == -1) {
+				printf "OK\n"
+				printf "-----------\n"
+			} else {
+				printf "OK (top %s) (total: %s)", limit[status], found[status]
+				printf "-----------------------\n\n"
+			}
+		}
+	}
+
+	if (limit[status] == -1 || row[status] <= limit[status]) {
+		if (status == 5) {
+			printf "  %s\n  %s\n  revoked\n\n", fp, uid
+		}
+		else if (status == 4) {
+			printf "  %s\n  %s\n\n", fp, uid
+		}
+		else if (status == 2) {
+			printf "  %s\n  %s\n  expired on %s\n\n", fp, uid, expiry
+		}
+		else if (status == 1 || status == 0) {
+			printf "  %s\n  %s\n  expires on %s\n\n", fp, uid, expiry
+		}
+	}
+}
+
+END {
+	if (limit[5] != 0 && found[5] == 0) printf "Revoked: none\n\n"
+	if (limit[4] != 0 && found[4] == 0) printf "Do not expire: none\n\n"
+	if (limit[2] != 0 && found[2] == 0) printf "Has already expired: none\n\n"
+	if (limit[1] != 0 && found[1] == 0) printf "Expires in %s days: none\n\n", OPT_WARN
+	if (limit[0] != 0 && found[0] == 0) printf "OK: none\n\n"
+}' "$TMPFILE" "$TMPFILE"
+}
+
+
+OPT_REVOKED=-1
+OPT_EXPIRED=-1
+OPT_EXPIRES=-1
+OPT_OK=-1
+OPT_NOEXPIRY=-1
+
+OPT_WARN=90
+OPT_SCRIPTABLE=0
+
+while [ $# -gt 0 ]
+do
+	case "$1" in
+
+		--revoked|--expired|--expires|--ok|--no-expiry)
+
+			if ! is_integer "$2" ;
+			then
+				echo "$0: err; $1 must be an unsigned integer!" 1>&2
+				exit 2
+			fi
+
+			argname="$(echo "$1" | sed 's/-//g; s/^/OPT_/' | tr 'a-z' 'A-Z')"
+			argval="$(echo "$2" | sed 's/^0*//; s/^$/0/')"
+
+			eval "$argname=$argval"
+			shift
+			;;
+
+		-w|--warn)
+
+			if ! is_integer "$2" ;
+			then
+				echo "$0: err; $1 must be an integer" 1>&2
+				exit 2;
+			fi
+
+			argval="$(echo "$2" | sed 's/^0*//; s/^$/0/')"
+
+			if [ "$argval" -lt 1 -o "$argval" -gt 36500 ]
+			then
+				echo "$0: err; reach program limits" 1>&2
+				exit 2;
+			fi
+
+			OPT_WARN="$argval"
+			shift
+			;;
+
+		-s|--scriptable)
+
+			OPT_SCRIPTABLE=1
+			;;
+
+		-h|--help)
+			exit 2
+			;;
+
+		*)
+			;;
+	esac
+	shift
+done
+
+TMPFILE="$(mktemp)"
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPFILE" "$TMPDIR"' EXIT HUP INT QUIT TERM
+
+GNUPGHOME="$TMPDIR"
+export GNUPGHOME
+
+echo --revoked $OPT_REVOKED
+echo --expired $OPT_EXPIRED
+echo --expires $OPT_EXPIRES
+echo --ok $OPT_OK
+echo --no-expiry $OPT_NOEXPIRY
+echo '-s|--scriptable' $OPT_SCRIPTABLE
+echo '-w|--warn' $OPT_WARN
+echo
+echo
+
+import_by_pubkeys
+import_by_fingerprints
+
+if ! any_imported_keys ;
+then
+	echo "error: no keys were imported" 1>&2
+	exit 1
+fi
+
+if [ "$OPT_SCRIPTABLE" -gt 0 ];
+then
+	dump_scriptable_report
+else
+	dump_readable_report
+fi
