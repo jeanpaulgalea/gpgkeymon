@@ -543,7 +543,7 @@ EOF
         Set default <cnt> for --{revoked,expired,soon,ok,no-expiry} options.
 
   -V, --version
-		Print program name and version.
+        Print program name and version.
 
   -h, --help
         Print this help.
