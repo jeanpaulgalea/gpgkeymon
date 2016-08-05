@@ -40,7 +40,7 @@ PUBKEYS="${CONFDIR}/pubkeys"
 
 if [ ! -d "$CONFDIR" ];
 then
-	echo "directory not found: $CONFDIR" 1>&2
+	echo "directory not found: $CONFDIR" >&2
 	exit 2
 fi
 
@@ -63,7 +63,7 @@ import_by_pubkeys() {
 	fi
 
 	find "$PUBKEYS" -type f -exec sh -c \
-		"$GPG --import {} 1>/dev/null 2>/dev/null || echo 'failed to import: {}' 1>&2" \;
+		"$GPG --import {} 1>/dev/null 2>/dev/null || echo 'failed to import: {}' >&2" \;
 }
 
 import_by_fingerprints() {
@@ -79,7 +79,7 @@ import_by_fingerprints() {
 	do
 		if ! $GPG --keyserver "$OPT_KEYSERVER" --recv-keys "$fp" 1>/dev/null 2>/dev/null ;
 		then
-			echo "failed to import: $fp" 1>&2
+			echo "failed to import: $fp" >&2
 		fi
 	done
 }
@@ -195,7 +195,7 @@ get_generic_report() {
 
 		if [ "$status" -eq 3 ];
 		then
-			echo "error: can't calculate dates for $fp" 1>&2
+			echo "error: can't calculate dates for $fp" >&2
 			continue
 		fi
 
@@ -374,8 +374,8 @@ do
 
 			if [ ! -x "$2" ];
 			then
-				echo "$NAME: '$1' is not an executable path." 1>&2
-				echo "Try '$NAME --help' for more information." 1>&2
+				echo "$NAME: '$1' is not an executable path." >&2
+				echo "Try '$NAME --help' for more information." >&2
 				exit 2
 			fi
 
@@ -388,8 +388,8 @@ do
 
 			if [ -z "$2" ];
 			then
-				echo "$NAME: '$2' is not a valid keyserver." 1>&2
-				echo "Try '$NAME --help' for more information." 1>&2
+				echo "$NAME: '$2' is not a valid keyserver." >&2
+				echo "Try '$NAME --help' for more information." >&2
 				exit 2
 			fi
 
@@ -402,8 +402,8 @@ do
 
 			if ! is_integer "$2" ;
 			then
-				echo "$NAME: '$1' requires an unsigned integer." 1>&2
-				echo "Try '$NAME --help' for more information." 1>&2
+				echo "$NAME: '$1' requires an unsigned integer." >&2
+				echo "Try '$NAME --help' for more information." >&2
 				exit 2
 			fi
 
@@ -411,7 +411,7 @@ do
 
 			if [ "$argval" -lt 1 -o "$argval" -gt 36500 ]
 			then
-				echo "$NAME: error, program limits reached." 1>&2
+				echo "$NAME: error, program limits reached." >&2
 				exit 2
 			fi
 
@@ -428,8 +428,8 @@ do
 
 			if ! is_integer "$2" ;
 			then
-				echo "$NAME: '$1' requires an unsigned integer." 1>&2
-				echo "Try '$NAME --help' for more information." 1>&2
+				echo "$NAME: '$1' requires an unsigned integer." >&2
+				echo "Try '$NAME --help' for more information." >&2
 				exit 2
 			fi
 
@@ -438,7 +438,7 @@ do
 
 			if [ "$argval" -gt 10000 ]
 			then
-				echo "$NAME: error, program limits reached." 1>&2
+				echo "$NAME: error, program limits reached." >&2
 				exit 2
 			fi
 
@@ -450,8 +450,8 @@ do
 
 			if ! is_integer "$2" ;
 			then
-				echo "$NAME: '$1' requires an unsigned integer." 1>&2
-				echo "Try '$NAME --help' for more information." 1>&2
+				echo "$NAME: '$1' requires an unsigned integer." >&2
+				echo "Try '$NAME --help' for more information." >&2
 				exit 2
 			fi
 
@@ -459,7 +459,7 @@ do
 
 			if [ "$argval" -gt 10000 ]
 			then
-				echo "$NAME: error, program limits reached." 1>&2
+				echo "$NAME: error, program limits reached." >&2
 				exit 2
 			fi
 
@@ -562,8 +562,8 @@ EOF
 			;;
 
 		*)
-			echo "$NAME: invalid option -- '$1'" 1>&2
-			echo "Try '$NAME --help' for more information." 1>&2
+			echo "$NAME: invalid option -- '$1'" >&2
+			echo "Try '$NAME --help' for more information." >&2
 			exit 2
 			;;
 	esac
@@ -582,7 +582,7 @@ import_by_fingerprints
 
 if ! any_imported_keys ;
 then
-	echo "error: no keys were imported" 1>&2
+	echo "error: no keys were imported" >&2
 	exit 1
 fi
 
