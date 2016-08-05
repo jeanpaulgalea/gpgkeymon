@@ -398,28 +398,6 @@ do
 			shift
 			;;
 
-		--revoked|--expired|--expires|--ok|--no-expiry)
-
-			if ! is_integer "$2" ;
-			then
-				echo "$NAME: '$1' requires an unsigned integer." 1>&2
-				echo "Try '$NAME --help' for more information." 1>&2
-				exit 2
-			fi
-
-			argname="$(echo "$1" | sed 's/-//g; s/^/OPT_/' | tr 'a-z' 'A-Z')"
-			argval="$(echo "$2" | sed 's/^0*//; s/^$/0/')"
-
-			if [ "$argval" -gt 10000 ]
-			then
-				echo "$NAME: error, program limits reached." 1>&2
-				exit 2
-			fi
-
-			eval "$argname=$argval"
-			shift
-			;;
-
 		-w|--warn)
 
 			if ! is_integer "$2" ;
@@ -444,6 +422,28 @@ do
 		-s|--scriptable)
 
 			OPT_SCRIPTABLE=1
+			;;
+
+		--revoked|--expired|--expires|--ok|--no-expiry)
+
+			if ! is_integer "$2" ;
+			then
+				echo "$NAME: '$1' requires an unsigned integer." 1>&2
+				echo "Try '$NAME --help' for more information." 1>&2
+				exit 2
+			fi
+
+			argname="$(echo "$1" | sed 's/-//g; s/^/OPT_/' | tr 'a-z' 'A-Z')"
+			argval="$(echo "$2" | sed 's/^0*//; s/^$/0/')"
+
+			if [ "$argval" -gt 10000 ]
+			then
+				echo "$NAME: error, program limits reached." 1>&2
+				exit 2
+			fi
+
+			eval "$argname=$argval"
+			shift
 			;;
 
 		-h|--help)
