@@ -472,6 +472,13 @@ do
 			shift
 			;;
 
+		-V|--version)
+
+			echo "$NAME $VERSION"
+			exit
+
+			;;
+
 		-h|--help)
 			cat <<EOF
 $NAME v${VERSION}
@@ -545,8 +552,11 @@ EOF
   -a, --all <cnt>
         Set default <cnt> for --{revoked,expired,expires,ok,no-expiry} options.
 
+  -V, --version
+		Print program name and version.
+
   -h, --help
-        Print this help and exit.
+        Print this help.
 EOF
 			exit 2
 			;;
