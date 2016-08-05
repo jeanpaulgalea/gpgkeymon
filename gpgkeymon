@@ -66,7 +66,8 @@ import_by_fingerprints() {
 		tr 'a-f' 'A-F' | \
 			while IFS= read -r fp;
 	do
-		if ! $GPG --keyserver "$OPT_KEYSERVER" --recv-keys "$fp" 1>/dev/null 2>/dev/null ;
+		if ! $GPG --keyserver "$OPT_KEYSERVER" --keyserver-options timeout=5 \
+				--recv-keys "$fp" 1>/dev/null 2>/dev/null ;
 		then
 			echo "failed to import: $fp" >&2
 		fi
