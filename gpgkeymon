@@ -447,6 +447,81 @@ do
 			;;
 
 		-h|--help)
+			cat <<EOF
+$NAME v${VERSION}
+
+EOF
+
+			cat <<"EOF"
+  --gpg <path>
+		Explicitly set gpg binary path, instead of defaulting to
+		finding gpg2 in $PATH.
+
+  --keyserver <keyserver>
+        Set preferred keyserver when fetching keys by fingerprints.
+        Defaults to keys.gnupg.net.
+
+  -w, --warn <days>
+        Set the number of days, prior to the expiry date, when a key should be
+		considered "expiring soon".
+
+        Defaults to 90 days.
+
+  -s, --scriptable
+		Print output meant for script consumption. One line for each key,
+		each having five columns delimited by a colon.
+
+		Column 1 is the expiration date as YYYY-MM-DD, if any.
+
+		Column 2 is the status code;
+			5 == key has been revoked
+			4 == key has no expiration date
+			2 == key has already expired
+			1 == key will expire within -w|--warn days
+			0 == ok
+
+		Column 3 is the key fingerprint.
+
+		Column 4 is the name of the key holder.
+
+		Column 5 is the email address of the key holder, if any.
+
+  --revoked <cnt>
+        Limit the "revoked keys" report to the top <cnt>.
+        0 to suppress entirely.
+
+        Defaults to unlimited.
+
+  --expired <cnt>
+        Limit the "expired keys" report to the top <cnt>.
+        0 to suppress entirely.
+
+        Defaults to unlimited.
+
+  --expires <cnt>
+        Limit the "expires soon" key report to the top <cnt>.
+        0 to supress entirely.
+
+        Defaults to unlimited.
+
+  --ok <cnt>
+        Limit the "keys in good state" report to the top <cnt>.
+        0 to suppress entirely.
+
+        Defaults to unlimited.
+
+  --no-expiry <cnt>
+        Limit the "keys without an expiry date" report to the top <cnt>.
+        0 to suppress entirely.
+
+        Defaults to unlimited.
+
+  -a, --all <cnt>
+        Set default <cnt> for --{revoked,expired,expires,ok,no-expiry} options.
+
+  -h, --help
+        Print this help and exit.
+EOF
 			exit 2
 			;;
 
