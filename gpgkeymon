@@ -406,16 +406,6 @@ trap 'rm -rf "$TMPFILE" "$TMPDIR"' EXIT HUP INT QUIT TERM
 GNUPGHOME="$TMPDIR"
 export GNUPGHOME
 
-echo --revoked $OPT_REVOKED
-echo --expired $OPT_EXPIRED
-echo --expires $OPT_EXPIRES
-echo --ok $OPT_OK
-echo --no-expiry $OPT_NOEXPIRY
-echo '-s|--scriptable' $OPT_SCRIPTABLE
-echo '-w|--warn' $OPT_WARN
-echo
-echo
-
 import_by_pubkeys
 import_by_fingerprints
 
