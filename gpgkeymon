@@ -206,7 +206,7 @@ get_generic_report() {
 		sort -t: -k 2,2nr -k1,1
 }
 
-dump_scriptable_report() {
+dump_batch_report() {
 	get_generic_report | \
 		awk -F: \
 			-v OPT_REVOKED="$OPT_REVOKED" \
@@ -364,7 +364,7 @@ OPT_OK=-1
 OPT_NOEXPIRY=-1
 
 OPT_WARN=90
-OPT_SCRIPTABLE=0
+OPT_BATCH=0
 
 while [ $# -gt 0 ]
 do
@@ -419,9 +419,9 @@ do
 			shift
 			;;
 
-		-s|--scriptable)
+		-b|--batch)
 
-			OPT_SCRIPTABLE=1
+			OPT_BATCH=1
 			;;
 
 		--revoked|--expired|--expires|--ok|--no-expiry)
@@ -493,7 +493,7 @@ EOF
 
         Defaults to 90 days.
 
-  -s, --scriptable
+  -b, --batch
         Print output meant for script consumption. One line for each key,
         each having five columns delimited by a colon.
 
@@ -576,9 +576,9 @@ then
 	exit 1
 fi
 
-if [ "$OPT_SCRIPTABLE" -gt 0 ];
+if [ "$OPT_BATCH" -gt 0 ];
 then
-	dump_scriptable_report
+	dump_batch_report
 else
 	dump_readable_report
 fi

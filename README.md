@@ -61,7 +61,7 @@ This can be done by either providing public key files, something that `gpg --imp
 	gpgkeymon -a 0 --revoked 100 --expired 100
 
 	# same but scriptable
-	gpgkeymon -a 0 --revoked 100 --expired 100 -s
+	gpgkeymon -a 0 --revoked 100 --expired 100 -b
 
 	# show me everything except keys which are in good state
 	gpgkeymon --ok 0
