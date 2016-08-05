@@ -404,7 +404,7 @@ do
 			then
 				echo "$NAME: '$1' requires an unsigned integer." 1>&2
 				echo "Try '$NAME --help' for more information." 1>&2
-				exit 2;
+				exit 2
 			fi
 
 			argval="$(echo "$2" | sed 's/^0*//; s/^$/0/')"
@@ -412,7 +412,7 @@ do
 			if [ "$argval" -lt 1 -o "$argval" -gt 36500 ]
 			then
 				echo "$NAME: error, program limits reached." 1>&2
-				exit 2;
+				exit 2
 			fi
 
 			OPT_WARN="$argval"
