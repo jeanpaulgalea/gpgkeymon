@@ -133,13 +133,13 @@ get_key_status() {
 
 	if [ "$revoked" -gt 0 ];
 	then
-		return 5 #6
+		return 5
 	fi
 
 	# doesn't expire
 	if [ -z "$ts_expiry" ];
 	then
-		return 4 #5
+		return 4
 	fi
 
 	TS_NOW="$(date +%s)"
@@ -148,13 +148,13 @@ get_key_status() {
 	# unknown; can't figure out timestamps
 	if [ -z "$TS_NOW" -o -z "$TS_WARN" ];
 	then
-		return 3 #4
+		return 3
 	fi
 
 	# expired already
 	if [ "$TS_NOW" -gt "$ts_expiry" ];
 	then
-		return 2 #3
+		return 2
 	fi
 
 	if [ "$TS_WARN" -gt "$ts_expiry" ];
