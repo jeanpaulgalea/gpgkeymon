@@ -200,7 +200,7 @@ dump_batch_report() {
 		awk -F: \
 			-v OPT_REVOKED="$OPT_REVOKED" \
 			-v OPT_EXPIRED="$OPT_EXPIRED" \
-			-v OPT_EXPIRES="$OPT_EXPIRES" \
+			-v OPT_SOON="$OPT_SOON" \
 			-v OPT_OK="$OPT_OK" \
 			-v OPT_NOEXPIRY="$OPT_NOEXPIRY" '
 BEGIN {
@@ -215,7 +215,7 @@ BEGIN {
 	if (status == 5 && OPT_REVOKED  != -1 && a[status]++ >= OPT_REVOKED) next;
 	if (status == 4 && OPT_NOEXPIRY != -1 && a[status]++ >= OPT_NOEXPIRY) next;
 	if (status == 2 && OPT_EXPIRED  != -1 && a[status]++ >= OPT_EXPIRED) next;
-	if (status == 1 && OPT_EXPIRES  != -1 && a[status]++ >= OPT_EXPIRES) next;
+	if (status == 1 && OPT_SOON     != -1 && a[status]++ >= OPT_SOON) next;
 	if (status == 0 && OPT_OK       != -1 && a[status]++ >= OPT_OK) next;
 
 	# no email in uid
@@ -243,7 +243,7 @@ dump_readable_report() {
 	awk -F: \
 		-v OPT_REVOKED="$OPT_REVOKED" \
 		-v OPT_EXPIRED="$OPT_EXPIRED" \
-		-v OPT_EXPIRES="$OPT_EXPIRES" \
+		-v OPT_SOON="$OPT_SOON" \
 		-v OPT_OK="$OPT_OK" \
 		-v OPT_NOEXPIRY="$OPT_NOEXPIRY" \
 		-v OPT_WARN="$OPT_WARN" '
@@ -251,7 +251,7 @@ BEGIN {
 	limit[5] = OPT_REVOKED
 	limit[4] = OPT_NOEXPIRY
 	limit[2] = OPT_EXPIRED
-	limit[1] = OPT_EXPIRES
+	limit[1] = OPT_SOON
 	limit[0] = OPT_OK
 }
 
@@ -348,7 +348,7 @@ OPT_KEYSERVER=keys.gnupg.net
 
 OPT_REVOKED=-1
 OPT_EXPIRED=-1
-OPT_EXPIRES=-1
+OPT_SOON=-1
 OPT_OK=-1
 OPT_NOEXPIRY=-1
 
@@ -413,7 +413,7 @@ do
 			OPT_BATCH=1
 			;;
 
-		--revoked|--expired|--expires|--ok|--no-expiry)
+		--revoked|--expired|--soon|--ok|--no-expiry)
 
 			if ! is_integer "$2" ;
 			then
@@ -454,7 +454,7 @@ do
 
 			[ "$OPT_REVOKED" -eq -1 ] && OPT_REVOKED="$argval"
 			[ "$OPT_EXPIRED" -eq -1 ] && OPT_EXPIRED="$argval"
-			[ "$OPT_EXPIRES" -eq -1 ] && OPT_EXPIRES="$argval"
+			[ "$OPT_SOON" -eq -1 ] && OPT_SOON="$argval"
 			[ "$OPT_OK" -eq -1 ] && OPT_OK="$argval"
 			[ "$OPT_NOEXPIRY" -eq -1 ] && OPT_NOEXPIRY="$argval"
 
@@ -520,7 +520,7 @@ EOF
 
         Defaults to unlimited.
 
-  --expires <cnt>
+  --soon <cnt>
         Limit the "expires soon" key report to the top <cnt>.
         0 to supress entirely.
 
@@ -539,7 +539,7 @@ EOF
         Defaults to unlimited.
 
   -a, --all <cnt>
-        Set default <cnt> for --{revoked,expired,expires,ok,no-expiry} options.
+        Set default <cnt> for --{revoked,expired,soon,ok,no-expiry} options.
 
   -V, --version
 		Print program name and version.
