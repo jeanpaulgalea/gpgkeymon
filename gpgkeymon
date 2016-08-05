@@ -30,8 +30,8 @@ set -u
 
 PATH="/usr/local/bin:/usr/bin:/bin"
 
-GPG=gpg2
-KEYSERVER=keys.gnupg.net
+NAME="$(basename "$0")"
+VERSION=0.1
 
 BASEDIR="$( cd "$(dirname "$0")" && pwd )"
 CONFDIR="${BASEDIR}/config"
@@ -77,7 +77,7 @@ import_by_fingerprints() {
 		tr 'a-f' 'A-F' | \
 			while IFS= read -r fp;
 	do
-		if ! $GPG --keyserver $KEYSERVER --recv-keys "$fp" 1>/dev/null 2>/dev/null ;
+		if ! $GPG --keyserver "$OPT_KEYSERVER" --recv-keys "$fp" 1>/dev/null 2>/dev/null ;
 		then
 			echo "failed to import: $fp" 1>&2
 		fi
@@ -354,6 +354,8 @@ END {
 }' "$TMPFILE" "$TMPFILE"
 }
 
+GPG=gpg2
+OPT_KEYSERVER=keys.gnupg.net
 
 OPT_REVOKED=-1
 OPT_EXPIRED=-1
@@ -368,16 +370,51 @@ while [ $# -gt 0 ]
 do
 	case "$1" in
 
+		--gpg)
+
+			if [ ! -x "$2" ];
+			then
+				echo "$NAME: '$1' is not an executable path." 1>&2
+				echo "Try '$NAME --help' for more information." 1>&2
+				exit 2
+			fi
+
+			GPG="$2"
+
+			shift
+			;;
+
+		--keyserver)
+
+			if [ -z "$2" ];
+			then
+				echo "$NAME: '$2' is not a valid keyserver." 1>&2
+				echo "Try '$NAME --help' for more information." 1>&2
+				exit 2
+			fi
+
+			OPT_KEYSERVER="$2"
+
+			shift
+			;;
+
 		--revoked|--expired|--expires|--ok|--no-expiry)
 
 			if ! is_integer "$2" ;
 			then
-				echo "$0: err; $1 must be an unsigned integer!" 1>&2
+				echo "$NAME: '$1' requires an unsigned integer." 1>&2
+				echo "Try '$NAME --help' for more information." 1>&2
 				exit 2
 			fi
 
 			argname="$(echo "$1" | sed 's/-//g; s/^/OPT_/' | tr 'a-z' 'A-Z')"
 			argval="$(echo "$2" | sed 's/^0*//; s/^$/0/')"
+
+			if [ "$argval" -gt 10000 ]
+			then
+				echo "$NAME: error, program limits reached." 1>&2
+				exit 2
+			fi
 
 			eval "$argname=$argval"
 			shift
@@ -387,7 +424,8 @@ do
 
 			if ! is_integer "$2" ;
 			then
-				echo "$0: err; $1 must be an integer" 1>&2
+				echo "$NAME: '$1' requires an unsigned integer." 1>&2
+				echo "Try '$NAME --help' for more information." 1>&2
 				exit 2;
 			fi
 
@@ -395,7 +433,7 @@ do
 
 			if [ "$argval" -lt 1 -o "$argval" -gt 36500 ]
 			then
-				echo "$0: err; reach program limits" 1>&2
+				echo "$NAME: error, program limits reached." 1>&2
 				exit 2;
 			fi
 
@@ -413,6 +451,9 @@ do
 			;;
 
 		*)
+			echo "$NAME: invalid option -- '$1'" 1>&2
+			echo "Try '$NAME --help' for more information." 1>&2
+			exit 2
 			;;
 	esac
 	shift
