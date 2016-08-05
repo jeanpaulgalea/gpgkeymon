@@ -21,26 +21,25 @@ A list of keys to be monitored must be explicitly defined.
 
 This can be done by either providing public key files, something that `gpg --import` can work with, or by providing a list of fingerprints where the corresponding key can be downloaded from a key server.
 
-	cd /path/to/where/gpgkeymon/is/located
-	mkdir config
+	mkdir -p /etc/gpgkeymon
 
 	# using public key files
-	mkdir -p config/pubkeys
-	gpg --export ABCDEF01 >config/pubkeys/spike.asc
+	mkdir -p /etc/gpgkeymon/pubkeys
+	gpg --export ABCDEF01 >/etc/gpgkeymon/pubkeys/spike.asc
 
 	# subfolder as a group
-	mkdir -p config/pubkeys/sysadmins
-	gpg --expore ABCDEF02 >config/pubkeys/sysadmins/tom.asc
-	gpg --expore ABCDEF03 >config/pubkeys/sysadmins/jerry.asc
+	mkdir -p /etc/gpgkeymon/pubkeys/sysadmins
+	gpg --expore ABCDEF02 >/etc/gpgkeymon/pubkeys/sysadmins/tom.asc
+	gpg --expore ABCDEF03 >/etc/gpgkeymon/pubkeys/sysadmins/jerry.asc
 
 	# another group
-	mkdir -p config/pubkeys/developers
-	gpg --export ABCDEF04 >config/pubkeys/developers/tuffy.asc
+	mkdir -p /etc/gpgkeymon/pubkeys/developers
+	gpg --export ABCDEF04 >/etc/gpgkeymon/pubkeys/developers/tuffy.asc
 
 	# using fingerprints
-	touch config/fingerprints
-	echo 75DDC3C4A499F1A18CB5F3C8CBF8D6FD518E17E1 >>config/fingerprints
-	echo 790BC7277767219C42C86F933B4FE6ACC0B21F32 >>config/fingerprints
+	touch /etc/gpgkeymon/fingerprints
+	echo 75DDC3C4A499F1A18CB5F3C8CBF8D6FD518E17E1 >>/etc/gpgkeymon/fingerprints
+	echo 790BC7277767219C42C86F933B4FE6ACC0B21F32 >>/etc/gpgkeymon/fingerprints
 
 
 # EXAMPLES

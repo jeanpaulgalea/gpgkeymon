@@ -561,8 +561,7 @@ EOF
 done
 
 
-BASEDIR="$( cd "$(dirname "$0")" && pwd )"
-CONFDIR="${BASEDIR}/config"
+CONFDIR="/etc/gpgkeymon"
 FPS="${CONFDIR}/fingerprints"
 PUBKEYS="${CONFDIR}/pubkeys"
 
