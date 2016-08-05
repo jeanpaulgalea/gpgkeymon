@@ -446,6 +446,32 @@ do
 			shift
 			;;
 
+		-a|--all)
+
+			if ! is_integer "$2" ;
+			then
+				echo "$NAME: '$1' requires an unsigned integer." 1>&2
+				echo "Try '$NAME --help' for more information." 1>&2
+				exit 2
+			fi
+
+			argval="$(echo "$2" | sed 's/^0*//; s/^$/0/')"
+
+			if [ "$argval" -gt 10000 ]
+			then
+				echo "$NAME: error, program limits reached." 1>&2
+				exit 2
+			fi
+
+			[ "$OPT_REVOKED" -eq -1 ] && OPT_REVOKED="$argval"
+			[ "$OPT_EXPIRED" -eq -1 ] && OPT_EXPIRED="$argval"
+			[ "$OPT_EXPIRES" -eq -1 ] && OPT_EXPIRES="$argval"
+			[ "$OPT_OK" -eq -1 ] && OPT_OK="$argval"
+			[ "$OPT_NOEXPIRY" -eq -1 ] && OPT_NOEXPIRY="$argval"
+
+			shift
+			;;
+
 		-h|--help)
 			cat <<EOF
 $NAME v${VERSION}
