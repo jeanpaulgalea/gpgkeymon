@@ -558,7 +558,7 @@ EOF
   -h, --help
         Print this help.
 EOF
-			exit 2
+			exit
 			;;
 
 		*)
