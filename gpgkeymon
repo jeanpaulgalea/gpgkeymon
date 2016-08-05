@@ -33,17 +33,6 @@ PATH="/usr/local/bin:/usr/bin:/bin"
 NAME="$(basename "$0")"
 VERSION="1.20160805"
 
-BASEDIR="$( cd "$(dirname "$0")" && pwd )"
-CONFDIR="${BASEDIR}/config"
-FPS="${CONFDIR}/fingerprints"
-PUBKEYS="${CONFDIR}/pubkeys"
-
-if [ ! -d "$CONFDIR" ];
-then
-	echo "directory not found: $CONFDIR" >&2
-	exit 2
-fi
-
 
 is_integer() {
 	local val="$1"
@@ -569,6 +558,18 @@ EOF
 	esac
 	shift
 done
+
+
+BASEDIR="$( cd "$(dirname "$0")" && pwd )"
+CONFDIR="${BASEDIR}/config"
+FPS="${CONFDIR}/fingerprints"
+PUBKEYS="${CONFDIR}/pubkeys"
+
+if [ ! -d "$CONFDIR" ];
+then
+	echo "directory not found: $CONFDIR" >&2
+	exit 2
+fi
 
 TMPFILE="$(mktemp)"
 TMPDIR="$(mktemp -d)"
