@@ -122,13 +122,13 @@ get_key_status() {
 
 	if [ "$revoked" -gt 0 ];
 	then
-		return 5
+		return 4
 	fi
 
 	# doesn't expire
 	if [ -z "$ts_expiry" ];
 	then
-		return 4
+		return 3
 	fi
 
 	TS_NOW="$(date +%s)"
@@ -137,7 +137,7 @@ get_key_status() {
 	# unknown; can't figure out timestamps
 	if [ -z "$TS_NOW" -o -z "$TS_WARN" ];
 	then
-		return 3
+		return 99
 	fi
 
 	# expired already
@@ -146,6 +146,7 @@ get_key_status() {
 		return 2
 	fi
 
+	# expires soon
 	if [ "$TS_WARN" -gt "$ts_expiry" ];
 	then
 		return 1
@@ -182,7 +183,7 @@ get_generic_report() {
 		status=$?
 		set -e
 
-		if [ "$status" -eq 3 ];
+		if [ "$status" -eq 99 ];
 		then
 			echo "error: can't calculate dates for $fp" >&2
 			continue
@@ -212,8 +213,8 @@ BEGIN {
 	fp=$3
 	uid=$4
 
-	if (status == 5 && OPT_REVOKED  != -1 && a[status]++ >= OPT_REVOKED) next;
-	if (status == 4 && OPT_NOEXPIRY != -1 && a[status]++ >= OPT_NOEXPIRY) next;
+	if (status == 4 && OPT_REVOKED  != -1 && a[status]++ >= OPT_REVOKED) next;
+	if (status == 3 && OPT_NOEXPIRY != -1 && a[status]++ >= OPT_NOEXPIRY) next;
 	if (status == 2 && OPT_EXPIRED  != -1 && a[status]++ >= OPT_EXPIRED) next;
 	if (status == 1 && OPT_SOON     != -1 && a[status]++ >= OPT_SOON) next;
 	if (status == 0 && OPT_OK       != -1 && a[status]++ >= OPT_OK) next;
@@ -248,8 +249,8 @@ dump_readable_report() {
 		-v OPT_NOEXPIRY="$OPT_NOEXPIRY" \
 		-v OPT_WARN="$OPT_WARN" '
 BEGIN {
-	limit[5] = OPT_REVOKED
-	limit[4] = OPT_NOEXPIRY
+	limit[4] = OPT_REVOKED
+	limit[3] = OPT_NOEXPIRY
 	limit[2] = OPT_EXPIRED
 	limit[1] = OPT_SOON
 	limit[0] = OPT_OK
@@ -271,7 +272,7 @@ FNR == NR {
 	if (limit[status] == 0) next;
 
 	if (row[status] == 1) {
-		if (status == 5) {
+		if (status == 4) {
 			if (limit[status] == -1) {
 				printf "Revoked\n"
 				printf "-------\n\n"
@@ -280,7 +281,7 @@ FNR == NR {
 				printf "----------------------------\n\n"
 			}
 		}
-		else if (status == 4) {
+		else if (status == 3) {
 			if (limit[status] == -1) {
 				printf "Do not expire\n"
 				printf "---------------\n\n"
@@ -319,10 +320,10 @@ FNR == NR {
 	}
 
 	if (limit[status] == -1 || row[status] <= limit[status]) {
-		if (status == 5) {
+		if (status == 4) {
 			printf "  %s\n  %s\n  revoked\n\n", fp, uid
 		}
-		else if (status == 4) {
+		else if (status == 3) {
 			printf "  %s\n  %s\n\n", fp, uid
 		}
 		else if (status == 2) {
@@ -335,8 +336,8 @@ FNR == NR {
 }
 
 END {
-	if (limit[5] != 0 && found[5] == 0) printf "Revoked: none\n\n"
-	if (limit[4] != 0 && found[4] == 0) printf "Do not expire: none\n\n"
+	if (limit[4] != 0 && found[4] == 0) printf "Revoked: none\n\n"
+	if (limit[3] != 0 && found[3] == 0) printf "Do not expire: none\n\n"
 	if (limit[2] != 0 && found[2] == 0) printf "Has already expired: none\n\n"
 	if (limit[1] != 0 && found[1] == 0) printf "Expires in %s days: none\n\n", OPT_WARN
 	if (limit[0] != 0 && found[0] == 0) printf "OK: none\n\n"
@@ -496,8 +497,8 @@ EOF
         Column 1 is the expiration date as YYYY-MM-DD, if any.
 
         Column 2 is the status code;
-            5 == key has been revoked
-            4 == key has no expiration date
+            4 == key has been revoked
+            3 == key has no expiration date
             2 == key has already expired
             1 == key will expire within -w|--warn days
             0 == ok
