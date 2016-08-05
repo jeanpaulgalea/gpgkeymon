@@ -562,31 +562,50 @@ EOF
 done
 
 
-CONFDIR="/etc/gpgkeymon"
-FPS="${CONFDIR}/fingerprints"
-PUBKEYS="${CONFDIR}/pubkeys"
-
-if [ ! -d "$CONFDIR" ];
-then
-	echo "directory not found: $CONFDIR" >&2
-	exit 2
-fi
-
 TMPFILE="$(mktemp)"
 TMPDIR="$(mktemp -d)"
 trap 'rm -rf "$TMPFILE" "$TMPDIR"' EXIT HUP INT QUIT TERM
 
-GNUPGHOME="$TMPDIR"
-export GNUPGHOME
 
-import_by_pubkeys
-import_by_fingerprints
-
-if ! any_imported_keys ;
+if [ -d "${HOME}/.gpgkeymon" ];
 then
-	echo "error: no keys were imported" >&2
-	exit 1
+
+	CONFDIR="${HOME}/.gpgkeymon"
+	FPS="${CONFDIR}/fingerprints"
+	PUBKEYS="${CONFDIR}/pubkeys"
+
+	GNUPGHOME="$TMPDIR"
+	export GNUPGHOME
+
+	import_by_pubkeys
+	import_by_fingerprints
+
+	if ! any_imported_keys ;
+	then
+		echo "error: no keys were imported" >&2
+		exit 1
+	fi
+
+elif [ -n "${GNUPGHOME:-}" ];
+then
+
+	# noop
+	:
+
+elif [ -d "${HOME}/.gnupg" ];
+then
+
+	GNUPGHOME="${HOME}/.gnupg"
+	export GNUPGHOME
+
+else
+
+	echo "$NAME: no configuration!" >&2
+	echo "export a \$GNUPHOME or create ~/.gnupg or configure ~/.gpgkeymon" >&2
+	exit 2
+
 fi
+
 
 if [ "$OPT_BATCH" -gt 0 ];
 then

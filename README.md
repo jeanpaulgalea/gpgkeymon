@@ -10,36 +10,46 @@ version 2.0.0
 
 The primary purpose of this program is to monitor a set of keys and report on their expiration status.
 
-It can be configured to mail a weekly/monthly report to a system administrator.
-
-Or it can also be used as a source for other scripts, e.g. to email the key holder directly or even submit checks to a monitoring system.
-
+It can be configured to mail a weekly/monthly report to a system administrator or as a source for other scripts, e.g. to email the key holder directly or to even submit checks to a monitoring system.
 
 # CONFIGURATION
 
-A list of keys to be monitored must be explicitly defined.
+Without any configuration `gpgkeymon` generates a report based on the local keyring.
 
-This can be done by either providing public key files, something that `gpg --import` can work with, or by providing a list of fingerprints where the corresponding key can be downloaded from a key server.
+However if `~/.gnupgmon` is found, the local keyring is ignored and `~/.gpgkeymon` is used instead.
 
-	mkdir -p /etc/gpgkeymon
+Here's the exact lookup process:
 
-	# using public key files
-	mkdir -p /etc/gpgkeymon/pubkeys
-	gpg --export ABCDEF01 >/etc/gpgkeymon/pubkeys/spike.asc
+	1. ~/.gpgkeymon if directory is found.
+
+	2. $GNUPGHOME if exported.
+
+	3. ~/.gnupg if directory is found.
+
+The `~/.gpgkeymon` directory can be configured to generate a report by a list of key fingerprints, or public key files, or both.
+
+To use fingerprints (automatically fetches the key from a keyserver):
+
+	mkdir -p ~/.gpgkeymon
+	touch ~/.gpgkeymon/fingerprints
+	echo 75DDC3C4A499F1A18CB5F3C8CBF8D6FD518E17E1 >> ~/.gpgkeymon/fingerprints
+	echo 790BC7277767219C42C86F933B4FE6ACC0B21F32 >> ~/.gpgkeymon/fingerprints
+
+To use public key files:
+
+	mkdir -p ~/.gpgkeymon/pubkeys
+
+	gpg --export ABCDEF01 > ~/.gpgkeymon/pubkeys/nibbles.asc
 
 	# subfolder as a group
 	mkdir -p /etc/gpgkeymon/pubkeys/sysadmins
-	gpg --expore ABCDEF02 >/etc/gpgkeymon/pubkeys/sysadmins/tom.asc
-	gpg --expore ABCDEF03 >/etc/gpgkeymon/pubkeys/sysadmins/jerry.asc
+	gpg --export ABCDEF02 > ~/.gpgkeymon/pubkeys/sysadmins/tom.asc
+	gpg --export ABCDEF03 > ~/.gpgkeymon/pubkeys/sysadmins/jerry.asc
 
 	# another group
-	mkdir -p /etc/gpgkeymon/pubkeys/developers
-	gpg --export ABCDEF04 >/etc/gpgkeymon/pubkeys/developers/tuffy.asc
-
-	# using fingerprints
-	touch /etc/gpgkeymon/fingerprints
-	echo 75DDC3C4A499F1A18CB5F3C8CBF8D6FD518E17E1 >>/etc/gpgkeymon/fingerprints
-	echo 790BC7277767219C42C86F933B4FE6ACC0B21F32 >>/etc/gpgkeymon/fingerprints
+	mkdir -p ~/.gpgkeymon/pubkeys/developers
+	gpg --export ABCDEF04 > ~/.gpgkeymon/pubkeys/developers/spike.asc
+	gpg --export ABCDEF05 > ~/.gpgkeymon/pubkeys/developers/tyke.asc
 
 
 # EXAMPLES
