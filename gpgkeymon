@@ -35,8 +35,8 @@ KEYSERVER=keys.gnupg.net
 
 BASEDIR="$( cd "$(dirname "$0")" && pwd )"
 CONFDIR="${BASEDIR}/config"
-FPS="$CONFDIR/fingerprints"
-PUBKEYS="$CONFDIR/pubkeys"
+FPS="${CONFDIR}/fingerprints"
+PUBKEYS="${CONFDIR}/pubkeys"
 
 if [ ! -d "$CONFDIR" ];
 then
