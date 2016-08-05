@@ -214,8 +214,14 @@ dump_scriptable_report() {
 			-v OPT_EXPIRES="$OPT_EXPIRES" \
 			-v OPT_OK="$OPT_OK" \
 			-v OPT_NOEXPIRY="$OPT_NOEXPIRY" '
+BEGIN {
+	OFS=":"
+}
 {
+	expiry=$1
 	status=$2
+	fp=$3
+	uid=$4
 
 	if (status == 5 && OPT_REVOKED  != -1 && a[status]++ >= OPT_REVOKED) next;
 	if (status == 4 && OPT_NOEXPIRY != -1 && a[status]++ >= OPT_NOEXPIRY) next;
@@ -223,7 +229,20 @@ dump_scriptable_report() {
 	if (status == 1 && OPT_EXPIRES  != -1 && a[status]++ >= OPT_EXPIRES) next;
 	if (status == 0 && OPT_OK       != -1 && a[status]++ >= OPT_OK) next;
 
-	print $0
+	# no email in uid
+	if (uid !~ / <[^@]+@[^@]+>$/) {
+		print $0, ""
+		next
+	}
+
+	name=uid
+	sub(/ <[^@]+@[^@]+>$/, "", name)
+
+	email=substr(uid, length(name)+1)
+	sub(/^ *</, "", email)
+	sub(/>$/, "", email)
+
+	print expiry, status, fp, name, email
 }
 '
 }
