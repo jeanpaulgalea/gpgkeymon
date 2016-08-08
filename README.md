@@ -73,7 +73,7 @@ To use public key files:
 	gpgkeymon -a 0 --revoked 100 --expired 100 -b
 
 	# show me everything except keys which are in good state
-	gpgkeymon --ok 0
+	gpgkeymon --valid 0
 
 	# don't hide any section but limit each one to top 100 keys
 	gpgkeymon -a 100
