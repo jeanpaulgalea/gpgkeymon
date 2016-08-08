@@ -302,10 +302,10 @@ FNR == NR {
 		}
 		else if (status == 1) {
 			if (limit[status] == -1) {
-				printf "Expires in %s days\n", OPT_WARN
+				printf "Expire in %s days\n", OPT_WARN
 				printf "------------------\n\n"
 			} else {
-				printf "Expires in %s days (top %s) (total: %s)\n", OPT_WARN, limit[status], found[status]
+				printf "Expire in %s days (top %s) (total: %s)\n", OPT_WARN, limit[status], found[status]
 				printf "---------------------------------------\n\n"
 			}
 		}
@@ -340,7 +340,7 @@ END {
 	if (limit[4] != 0 && found[4] == 0) printf "Revoked: none\n\n"
 	if (limit[3] != 0 && found[3] == 0) printf "Never expire: none\n\n"
 	if (limit[2] != 0 && found[2] == 0) printf "Have expired: none\n\n"
-	if (limit[1] != 0 && found[1] == 0) printf "Expires in %s days: none\n\n", OPT_WARN
+	if (limit[1] != 0 && found[1] == 0) printf "Expire in %s days: none\n\n", OPT_WARN
 	if (limit[0] != 0 && found[0] == 0) printf "Valid: none\n\n"
 }' "$TMPFILE" "$TMPFILE"
 }
