@@ -63,8 +63,8 @@ To use public key files:
 	# warn one month before keys expire (rather than the default 3 months)
 	gpgkeymon -w 30
 
-	# only interested in keys without expiry date (top 100)
-	gpgkeymon -a 0 --no-expiry 100
+	# only interested in keys without any expiry date (top 100)
+	gpgkeymon -a 0 --never-expire 100
 
 	# only revoked and expired keys (top 100)
 	gpgkeymon -a 0 --revoked 100 --expired 100

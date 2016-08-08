@@ -204,7 +204,7 @@ dump_batch_report() {
 			-v OPT_EXPIRED="$OPT_EXPIRED" \
 			-v OPT_SOON="$OPT_SOON" \
 			-v OPT_OK="$OPT_OK" \
-			-v OPT_NOEXPIRY="$OPT_NOEXPIRY" '
+			-v OPT_NEVEREXPIRE="$OPT_NEVEREXPIRE" '
 BEGIN {
 	OFS=":"
 }
@@ -214,11 +214,11 @@ BEGIN {
 	fp=$3
 	uid=$4
 
-	if (status == 4 && OPT_REVOKED  != -1 && a[status]++ >= OPT_REVOKED) next;
-	if (status == 3 && OPT_NOEXPIRY != -1 && a[status]++ >= OPT_NOEXPIRY) next;
-	if (status == 2 && OPT_EXPIRED  != -1 && a[status]++ >= OPT_EXPIRED) next;
-	if (status == 1 && OPT_SOON     != -1 && a[status]++ >= OPT_SOON) next;
-	if (status == 0 && OPT_OK       != -1 && a[status]++ >= OPT_OK) next;
+	if (status == 4 && OPT_REVOKED     != -1 && a[status]++ >= OPT_REVOKED) next;
+	if (status == 3 && OPT_NEVEREXPIRE != -1 && a[status]++ >= OPT_NEVEREXPIRE) next;
+	if (status == 2 && OPT_EXPIRED     != -1 && a[status]++ >= OPT_EXPIRED) next;
+	if (status == 1 && OPT_SOON        != -1 && a[status]++ >= OPT_SOON) next;
+	if (status == 0 && OPT_OK          != -1 && a[status]++ >= OPT_OK) next;
 
 	# no email in uid
 	if (uid !~ / <[^@]+@[^@]+>$/) {
@@ -247,11 +247,11 @@ dump_readable_report() {
 		-v OPT_EXPIRED="$OPT_EXPIRED" \
 		-v OPT_SOON="$OPT_SOON" \
 		-v OPT_OK="$OPT_OK" \
-		-v OPT_NOEXPIRY="$OPT_NOEXPIRY" \
+		-v OPT_NEVEREXPIRE="$OPT_NEVEREXPIRE" \
 		-v OPT_WARN="$OPT_WARN" '
 BEGIN {
 	limit[4] = OPT_REVOKED
-	limit[3] = OPT_NOEXPIRY
+	limit[3] = OPT_NEVEREXPIRE
 	limit[2] = OPT_EXPIRED
 	limit[1] = OPT_SOON
 	limit[0] = OPT_OK
@@ -284,10 +284,10 @@ FNR == NR {
 		}
 		else if (status == 3) {
 			if (limit[status] == -1) {
-				printf "Do not expire\n"
+				printf "Never expire\n"
 				printf "---------------\n\n"
 			} else {
-				printf "Do not expire (top %s) (total: %s)\n", limit[status], found[status]
+				printf "Never expire (top %s) (total: %s)\n", limit[status], found[status]
 				printf "------------------------------------\n\n"
 			}
 		}
@@ -338,7 +338,7 @@ FNR == NR {
 
 END {
 	if (limit[4] != 0 && found[4] == 0) printf "Revoked: none\n\n"
-	if (limit[3] != 0 && found[3] == 0) printf "Do not expire: none\n\n"
+	if (limit[3] != 0 && found[3] == 0) printf "Never expire: none\n\n"
 	if (limit[2] != 0 && found[2] == 0) printf "Has already expired: none\n\n"
 	if (limit[1] != 0 && found[1] == 0) printf "Expires in %s days: none\n\n", OPT_WARN
 	if (limit[0] != 0 && found[0] == 0) printf "OK: none\n\n"
@@ -352,7 +352,7 @@ OPT_REVOKED=-1
 OPT_EXPIRED=-1
 OPT_SOON=-1
 OPT_OK=-1
-OPT_NOEXPIRY=-1
+OPT_NEVEREXPIRE=-1
 
 OPT_WARN=90
 OPT_BATCH=0
@@ -415,7 +415,7 @@ do
 			OPT_BATCH=1
 			;;
 
-		--revoked|--expired|--soon|--ok|--no-expiry)
+		--revoked|--expired|--soon|--ok|--never-expire)
 
 			if ! is_integer "$2" ;
 			then
@@ -458,7 +458,7 @@ do
 			[ "$OPT_EXPIRED" -eq -1 ] && OPT_EXPIRED="$argval"
 			[ "$OPT_SOON" -eq -1 ] && OPT_SOON="$argval"
 			[ "$OPT_OK" -eq -1 ] && OPT_OK="$argval"
-			[ "$OPT_NOEXPIRY" -eq -1 ] && OPT_NOEXPIRY="$argval"
+			[ "$OPT_NEVEREXPIRE" -eq -1 ] && OPT_NEVEREXPIRE="$argval"
 
 			shift
 			;;
@@ -534,14 +534,14 @@ EOF
 
         Defaults to unlimited.
 
-  --no-expiry <cnt>
+  --never-expire <cnt>
         Limit the "keys without an expiry date" report to the top <cnt>.
         0 to suppress entirely.
 
         Defaults to unlimited.
 
   -a, --all <cnt>
-        Set default <cnt> for --{revoked,expired,soon,ok,no-expiry} options.
+        Set default <cnt> for --{revoked,expired,soon,ok,never-expire} options.
 
   -V, --version
         Print program name and version.
