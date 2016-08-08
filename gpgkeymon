@@ -285,37 +285,37 @@ FNR == NR {
 		else if (status == 3) {
 			if (limit[status] == -1) {
 				printf "Never expire\n"
-				printf "---------------\n\n"
+				printf "------------\n\n"
 			} else {
 				printf "Never expire (top %s) (total: %s)\n", limit[status], found[status]
-				printf "------------------------------------\n\n"
+				printf "---------------------------------\n\n"
 			}
 		}
 		else if (status == 2) {
 			if (limit[status] == -1) {
 				printf "Have expired\n"
-				printf "---------------\n\n"
+				printf "------------\n\n"
 			} else {
 				printf "Have expired (top %s) (total: %s)\n", limit[status], found[status]
-				printf "------------------------------------\n\n"
+				printf "---------------------------------\n\n"
 			}
 		}
 		else if (status == 1) {
 			if (limit[status] == -1) {
 				printf "Expire in %s days\n", OPT_WARN
-				printf "------------------\n\n"
+				printf "-----------------\n\n"
 			} else {
 				printf "Expire in %s days (top %s) (total: %s)\n", OPT_WARN, limit[status], found[status]
-				printf "---------------------------------------\n\n"
+				printf "--------------------------------------\n\n"
 			}
 		}
 		else if (status == 0) {
 			if (limit[status] == -1) {
 				printf "Valid\n"
-				printf "-----------\n"
+				printf "-----\n"
 			} else {
-				printf "Valid (top %s) (total: %s)", limit[status], found[status]
-				printf "-----------------------\n\n"
+				printf "Valid (top %s) (total: %s)\n", limit[status], found[status]
+				printf "--------------------------\n\n"
 			}
 		}
 	}
