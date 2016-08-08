@@ -16,7 +16,7 @@ It can be configured to mail a weekly/monthly report to a system administrator o
 
 Without any configuration `gpgkeymon` generates a report based on the local keyring.
 
-However if `~/.gnupgmon` is found, the local keyring is ignored and `~/.gpgkeymon` is used instead.
+However if `~/.gpgkeymon` is found, the local keyring is ignored and `~/.gpgkeymon` is used instead.
 
 Here's the exact lookup process:
 
