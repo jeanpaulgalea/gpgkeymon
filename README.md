@@ -4,7 +4,7 @@ gpgkeymon - a shell script to keep tabs on a set of gpg keys.
 
 # VERSION
 
-version 3.0.0
+version 4.0.0
 
 # DESCRIPTION
 

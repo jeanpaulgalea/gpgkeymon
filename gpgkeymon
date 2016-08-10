@@ -31,7 +31,7 @@ set -u
 PATH="/usr/local/bin:/usr/bin:/bin"
 
 NAME="$(basename "$0")"
-VERSION="3.0.0"
+VERSION="4.0.0"
 
 
 is_integer() {
