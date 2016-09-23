@@ -90,7 +90,7 @@ get_keys_by_fingerprint() {
 #	revoked (bool 1/0)
 get_key_details() {
 	local fp="$1"
-	$GPG -k --with-colon "$fp" | awk '
+	$GPG -k --with-colon --fixed-list-mode "$fp" | awk '
 BEGIN {
 	FS=":"
 	OFS="\t"
