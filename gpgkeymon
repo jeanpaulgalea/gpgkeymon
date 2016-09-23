@@ -345,7 +345,7 @@ END {
 }' "$TMPFILE" "$TMPFILE"
 }
 
-GPG=gpg2
+GPG=gpg
 OPT_KEYSERVER=keys.gnupg.net
 
 OPT_REVOKED=-1
