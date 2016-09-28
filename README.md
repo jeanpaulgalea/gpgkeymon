@@ -10,70 +10,92 @@ version 4.0.1
 
 The primary purpose of this program is to monitor a set of keys and report on their expiration status.
 
-It can be configured to mail a weekly/monthly report to a system administrator or as a source for other scripts, e.g. to email the key holder directly or to even submit checks to a monitoring system.
+A typical report looks like:
+
+	Valid
+	-----
+	  B6042E2BD1FDBC2BCA8588B2FF8D3B45B7B875A9
+	  Jean Paul Galea <jeanpaul@yubico.com>
+	  expires on 2017-01-24
+
+	Revoked: none
+
+	Never expire: none
+
+	Have expired: none
+
+	Expire in 90 days: none
+
+In batch mode you could also use the output as a source for other scripts (e.g. to email the key holder directly).
+
+	2017-01-24:0:B6042E2BD1FDBC2BCA8588B2FF8D3B45B7B875A9:Jean Paul Galea:jeanpaul@yubico.com
+
+# INSTALL
+
+As root, install the script, create a custom user and switch to the new user.
+
+	# wget -O/usr/local/bin/gpgkeymon -- \
+	  'https://raw.githubusercontent.com/jeanpaulgalea/gpgkeymon/master/gpgkeymon'
+
+	# chmod +x /usr/local/bin/gpgkeymon
+
+	# adduser --system --home /home/gpgkeymon --shell /bin/sh \
+	  --disabled-login --group --gecos '' "gpgkeymon"
+
+	# su - gpgkeymon
+
 
 # CONFIGURATION
 
-Without any configuration `gpgkeymon` generates a report based on the local keyring.
+gpgkeymon generates a report based on the keyring at ~/.gnupg or $GNUPGHOME if set.
 
-However if `~/.gpgkeymon` is found, the local keyring is ignored and `~/.gpgkeymon` is used instead.
+As the new user, you can import keys from a keyserver:
 
-Here's the exact lookup process:
+	$ gpg --keyserver pgp.mit.edu --recv B6042E2BD1FDBC2BCA8588B2FF8D3B45B7B875A9
 
-	1. ~/.gpgkeymon if directory is found.
+Or import from file:
 
-	2. $GNUPGHOME if exported.
-
-	3. ~/.gnupg if directory is found.
-
-The `~/.gpgkeymon` directory can be configured to generate a report by a list of key fingerprints, or public key files, or both.
-
-To use fingerprints (automatically fetches the key from a keyserver):
-
-	mkdir -p ~/.gpgkeymon
-	touch ~/.gpgkeymon/fingerprints
-	echo 75DDC3C4A499F1A18CB5F3C8CBF8D6FD518E17E1 >> ~/.gpgkeymon/fingerprints
-	echo 790BC7277767219C42C86F933B4FE6ACC0B21F32 >> ~/.gpgkeymon/fingerprints
-
-To use public key files:
-
-	mkdir -p ~/.gpgkeymon/pubkeys
-
-	gpg --export ABCDEF01 > ~/.gpgkeymon/pubkeys/nibbles.asc
-
-	# subfolder as a group
-	mkdir -p /etc/gpgkeymon/pubkeys/sysadmins
-	gpg --export ABCDEF02 > ~/.gpgkeymon/pubkeys/sysadmins/tom.asc
-	gpg --export ABCDEF03 > ~/.gpgkeymon/pubkeys/sysadmins/jerry.asc
-
-	# another group
-	mkdir -p ~/.gpgkeymon/pubkeys/developers
-	gpg --export ABCDEF04 > ~/.gpgkeymon/pubkeys/developers/spike.asc
-	gpg --export ABCDEF05 > ~/.gpgkeymon/pubkeys/developers/tyke.asc
-
+	$ gpg --import pubkey.gpg
 
 # EXAMPLES
 
-	# use a different gpg binary
-	gpgkeymon --gpg /mnt/usr/bin/gpg2
+Generate the default report.
 
-	# use a preferred keyserver when fetching keys by fingerprint
-	gpgkeymon --keyserver myhost.mydomain.org
+	$ gpgkeymon
 
-	# warn one month before keys expire (rather than the default 3 months)
-	gpgkeymon -w 30
+Warn one month before the keys expire (rather than the default 3 months).
 
-	# only interested in keys without any expiry date (top 100)
-	gpgkeymon -a 0 --never-expire 100
+	$ gpgkeymon -w 30
 
-	# only revoked and expired keys (top 100)
-	gpgkeymon -a 0 --revoked 100 --expired 100
+Only interested in keys without any expiry date (top 100).
 
-	# same but scriptable
-	gpgkeymon -a 0 --revoked 100 --expired 100 -b
+	$ gpgkeymon -a 0 --never-expire 100
 
-	# show me everything except keys which are in good state
-	gpgkeymon --valid 0
+Only revoked and expired keys (top 100).
 
-	# don't hide any section but limit each one to top 100 keys
-	gpgkeymon -a 100
+	$ gpgkeymon -a 0 --revoked 100 --expired 100
+
+Same but scriptable.
+
+	$ gpgkeymon -a 0 --revoked 100 --expired 100 -b
+
+Show me everything except keys which are in good state.
+
+	$ gpgkeymon --valid 0
+
+Don't hide any section but limit each one to top 100 keys.
+
+	$ gpgkeymon -a 100
+
+Use a different gpg binary.
+
+	$ gpgkeymon --gpg /mnt/usr/bin/gpg2
+
+Use a different keyring.
+
+	$ GNUPGHOME=/path/to/keyring gpgkeymon
+
+To email a weekly report (assuming a working mail setup), create a file at `/etc/cron.d/gpgkeymon` with the following:
+
+	SHELL=/bin/sh
+	0 6 * * 1  gpgkeymon /usr/local/bin/gpgkeymon | /usr/bin/mailx -s "gpgkeymon weekly report" admin@example.org
